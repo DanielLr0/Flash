@@ -1,0 +1,128 @@
+
+<!-- saved from url=(0043)https://geo.airiscontrol.com/ino/flash.html -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+  <div class="input-group mt-3 ml-auto mr-auto">
+    <input id="msg" class="form-control" type="text" name="msg" placeholder="Un valor entre 0 y 999." />
+    <div class="input-group-append">
+        <button id="toggle" class="btn btn-primary">Enviar</button>
+    </div>
+<script>
+//have a console on mobile
+var consoleOutput = document.getElementById("console");
+const log = function(msg){
+	// 	consoleOutput.innerText = `${consoleOutput.innerText}\n${JSON.stringify(msg)}`;
+	document.getElementById("console").innerText = msg;
+	console.log(msg);
+}
+
+//Test browser support
+const SUPPORTS_MEDIA_DEVICES = 'mediaDevices' in navigator;
+
+if (SUPPORTS_MEDIA_DEVICES) {
+  //Get the environment camera (usually the second one)
+  navigator.mediaDevices.enumerateDevices().then(devices => {
+  
+    const cameras = devices.filter((device) => device.kind === 'videoinput');
+
+    if (cameras.length === 0) {
+      log('No se ha encontrado una camara en este dispositivo');
+    }
+    const camera = cameras[cameras.length - 1];
+
+    // Create stream and get video track
+    navigator.mediaDevices.getUserMedia({
+      video: {
+        deviceId: camera.deviceId,
+        facingMode: ['environment', 'user'],
+        height: {ideal: 1080},
+        width: {ideal: 1920}
+      }
+    }).then(stream => {
+      const track = stream.getVideoTracks()[0];
+
+      //Create image capture object and get camera capabilities
+      const imageCapture = new ImageCapture(track)
+imageCapture.getPhotoCapabilities().then(capabilities => {
+ 
+        //let there be light!
+		var isTorchOn  = false;
+        const btn = document.querySelector('.switch');
+        // if (capabilities.torch){
+          btn.addEventListener('click', function(){
+			isTorchOn = !isTorchOn;
+			log("El flash esta encendido?: " + isTorchOn)
+          	try{
+          	 	track.applyConstraints({
+           	  	advanced: [{torch: isTorchOn}]
+          	  });
+          	} catch(err){
+            		log(err);
+          	}
+          });
+
+		const btn2 = document.querySelector('.switchOff');
+        if (!capabilities.torch){
+			log("Precione habilitar y encender");
+		}
+          btn2.addEventListener('click', function(){
+          	try{
+          	 	track.applyConstraints({
+           	  	advanced: [{torch: false}]
+          	  });
+          	} catch(err){
+            		log(err);
+          	}
+          });
+
+      });
+    }).catch(log);
+  }).catch(log);
+  
+const msg = document.getElementById("msg");
+const button = document.getElementById("toggle");
+let interval = null;
+button.onclick = () => {
+
+  if (interval) {
+        clearInterval(interval);
+        interval = null;
+    }
+    const seq = [];
+    ["\x02", ...msg.value, "\n", "\x03"].forEach(c => seq.push(...encode(c.charCodeAt(0))));
+    interval = setInterval(() => {
+        if (!seq.length) {
+            clearInterval(interval);
+            interval = null;
+        } else if (seq.shift()) {
+          ('.switch');
+        } else {
+          ('.switchOff');
+        }
+    }, 50);
+
+    function parity(val) {
+    val = val ^ (val >> 1);
+    val = val ^ (val >> 2);
+    val = val ^ (val >> 4);
+    return val & 1;
+}
+
+function encode(char) {
+    const bits = [1];
+    for (var i = 0x80; i > 0; i >>= 1) {
+        bits.push(char & i ? 1 : 0);
+    }
+    bits.push(parity(char));
+    bits.push(0);
+    return bits;
+}}}
+</script>
+</head>
+<body>
+	<button class="switch">Encender / Apagar</button> - 
+	<button class="switchOff">Apagar</button>
+	<h2>
+	Console output
+	</h2>
+	<div id="console">Presione habilitar y encender</div>
+</body></html>
