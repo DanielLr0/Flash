@@ -1,11 +1,28 @@
 
-<!-- saved from url=(0043)https://geo.airiscontrol.com/ino/flash.html -->
 <html><head><meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
-  <div class="input-group mt-3 ml-auto mr-auto">
-    <input id="msg" class="form-control" type="text" name="msg" placeholder="Un valor entre 0 y 999." />
-    <div class="input-group-append">
-        <button id="toggle" class="btn btn-primary">Enviar</button>
-    </div>
+</head>
+<body>
+	<fieldset>
+    <legend>Asignaci�n</legend>
+		<label for="msg">ID:</label> <input id="msg" class="form-control" type="number" name="msg" placeholder="Un valor entre 0 y 999." value="1">
+		<div class="input-group-append">
+			<button id="toggle" class="btn btn-primary">Enviar</button>
+		</div>
+	</fieldset>
+	<button class="switch">Conmutar</button> - 
+	<button class="switchOn">Encender</button> - 
+	<button class="switchOff">Apagar</button>
+	<h2>
+	Console output
+	</h2>
+	<div id="console">TypeError: Cannot read properties of undefined (reading 'deviceId')</div>
+	<div>La trama es 3-3-8-0-17-0-1-77 --&gt; donde el 17 es el comando, el ultimo 1 es el que le vas a asignar, el 77 el crc, el 8 y el primer cero es lo correspondiente a el tipo de id a cual vas a mandar el comando que funciona igual que en cualquier otro comando</div>
+	<img src="https://geo.airiscontrol.com/ino/AsignacionId1.jpg" height="25%"> Asigna ID 1 (50 ms aprox.)<br>
+	
+	<img src="https://geo.airiscontrol.com/ino/AsignacionId1_2.jpg" height="25%"><br>
+	<img src="https://geo.airiscontrol.com/ino/LoQueHace.jpg" height="25%">
+
+
 <script>
 //have a console on mobile
 var consoleOutput = document.getElementById("console");
@@ -17,6 +34,10 @@ const log = function(msg){
 
 //Test browser support
 const SUPPORTS_MEDIA_DEVICES = 'mediaDevices' in navigator;
+
+const btnOn = document.querySelector('.switchOn');
+const btnOff = document.querySelector('.switchOff');
+var event = new Event('click', { bubbles: true, cancelable: false })
 
 if (SUPPORTS_MEDIA_DEVICES) {
   //Get the environment camera (usually the second one)
@@ -42,35 +63,50 @@ if (SUPPORTS_MEDIA_DEVICES) {
 
       //Create image capture object and get camera capabilities
       const imageCapture = new ImageCapture(track)
-imageCapture.getPhotoCapabilities().then(capabilities => {
+	imageCapture.getPhotoCapabilities().then(capabilities => {
  
         //let there be light!
 		var isTorchOn  = false;
-        const btn = document.querySelector('.switch');
-        // if (capabilities.torch){
-          btn.addEventListener('click', function(){
+        
+		if (!capabilities.torch) {
+			log("Presione habilitar y encender");
+		}
+		
+		const btnSwitch = document.querySelector('.switch');
+        btnSwitch.addEventListener('click', function(){
 			isTorchOn = !isTorchOn;
 			log("El flash esta encendido?: " + isTorchOn)
-          	try{
+          	try {
+          	 	track.applyConstraints({
+           	  	advanced: [{torch: isTorchOn}]
+          	  });
+          	} catch(err) {
+            	log(err);
+          	}
+          });
+
+		btnOff.addEventListener('click', function(){
+			// log("Apagamos");
+			isTorchOn = false;
+          	try {
+          	 	track.applyConstraints({
+           	  	advanced: [{torch: isTorchOn}]
+          	  });
+          	} catch(err) {
+            	log(err);
+          	}
+          });
+		  
+		
+		btnOn.addEventListener('click', function(){
+			// log("Encendemos");
+			isTorchOn = true;
+          	try {
           	 	track.applyConstraints({
            	  	advanced: [{torch: isTorchOn}]
           	  });
           	} catch(err){
-            		log(err);
-          	}
-          });
-
-		const btn2 = document.querySelector('.switchOff');
-        if (!capabilities.torch){
-			log("Precione habilitar y encender");
-		}
-          btn2.addEventListener('click', function(){
-          	try{
-          	 	track.applyConstraints({
-           	  	advanced: [{torch: false}]
-          	  });
-          	} catch(err){
-            		log(err);
+            	log(err);
           	}
           });
 
@@ -82,25 +118,29 @@ const msg = document.getElementById("msg");
 const button = document.getElementById("toggle");
 let interval = null;
 button.onclick = () => {
-
   if (interval) {
         clearInterval(interval);
         interval = null;
     }
     const seq = [];
     ["\x02", ...msg.value, "\n", "\x03"].forEach(c => seq.push(...encode(c.charCodeAt(0))));
+	log(seq);
     interval = setInterval(() => {
         if (!seq.length) {
             clearInterval(interval);
             interval = null;
         } else if (seq.shift()) {
-          ('.switch');
+		// log('Enciendiendo');
+		btnOn.dispatchEvent(event);
+          ('.switchOn');
         } else {
+		// log('Apagando');
+			btnOff.dispatchEvent(event);
           ('.switchOff');
         }
-    }, 50);
+    }, 30);
 
-    function parity(val) {
+function parity(val) {
     val = val ^ (val >> 1);
     val = val ^ (val >> 2);
     val = val ^ (val >> 4);
@@ -109,7 +149,7 @@ button.onclick = () => {
 
 function encode(char) {
     const bits = [1];
-    for (var i = 0x80; i > 0; i >>= 1) {
+    for (var i = 0x128; i > 0; i >>= 1) {
         bits.push(char & i ? 1 : 0);
     }
     bits.push(parity(char));
@@ -117,12 +157,4 @@ function encode(char) {
     return bits;
 }}}
 </script>
-</head>
-<body>
-	<button class="switch">Encender / Apagar</button> - 
-	<button class="switchOff">Apagar</button>
-	<h2>
-	Console output
-	</h2>
-	<div id="console">Presione habilitar y encender</div>
 </body></html>
