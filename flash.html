@@ -23,7 +23,6 @@
 	<img src="https://geo.airiscontrol.com/ino/AsignacionId1_2.jpg" height="25%"><br>
 	<img src="https://geo.airiscontrol.com/ino/LoQueHace.jpg" height="25%">
 
-
 <script>
 //have a console on mobile
 var consoleOutput = document.getElementById("console");
@@ -31,8 +30,7 @@ const log = function(msg){
 	// 	consoleOutput.innerText = `${consoleOutput.innerText}\n${JSON.stringify(msg)}`;
 	document.getElementById("console").innerText = msg;
 	console.log(msg);
-}
-
+} 
 //Test browser support
 
 const SUPPORTS_MEDIA_DEVICES = 'mediaDevices' in navigator;
@@ -69,7 +67,6 @@ if (SUPPORTS_MEDIA_DEVICES) {
  
         //let there be light!
 		var isTorchOn  = false;
-        
 		if (!capabilities.torch) {
 			log("Presione habilitar y encender");
 		}
@@ -151,7 +148,7 @@ function parity(val) {
 
 function encode(char) {
     const bits = [1];
-    for (var i = 0x280; i > 0; i >>= 1) {
+    for (var i = 0x80; i > 0; i >>= 1) {
         bits.push(char & i ? 1 : 0);
     }
     bits.push(parity(char));
